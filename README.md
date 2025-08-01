@@ -33,7 +33,7 @@ It uses Selenium to interact with the court's website and BeautifulSoup for HTML
 
 1. **Clone the repository:**
     ```sh
-    git clone https://github.com/yourusername/court_data.git
+    git clone https://github.com/anky209e/court_data.git
     cd court_data
     ```
 
