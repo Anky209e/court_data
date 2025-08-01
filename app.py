@@ -7,6 +7,9 @@ import os
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "change-this-in-production")
 
+# Fetch case types and years once at startup
+CASE_TYPES, CASE_YEARS = get_case_types_and_years()
+
 DB_SCHEMA = """
 CREATE TABLE IF NOT EXISTS queries (
     id INTEGER PRIMARY KEY,
@@ -137,6 +140,4 @@ def fromjson_filter(s):
     return json.loads(s)
 
 if __name__ == "__main__":
-    # Fetch once at startup
-    CASE_TYPES, CASE_YEARS = get_case_types_and_years()
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

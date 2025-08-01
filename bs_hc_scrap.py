@@ -16,8 +16,6 @@ def fetch_case_data(case_type, case_number, case_year):
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--remote-debugging-port=9222")
-    chrome_options.binary_location = "/usr/bin/chromium"
     driver = webdriver.Chrome(options=chrome_options)
     wait = WebDriverWait(driver, 10)
 
@@ -97,7 +95,11 @@ def fetch_case_data(case_type, case_number, case_year):
         driver.quit()
 
 def get_case_types_and_years():
-    driver = webdriver.Chrome(options=Options().add_argument("--headless"))
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    driver = webdriver.Chrome(options=chrome_options)
     driver.get("https://delhihighcourt.nic.in/app/get-case-type-status")
     select_type = Select(driver.find_element(By.NAME, "case_type"))
     types = [o.text for o in select_type.options if o.text.strip()]
