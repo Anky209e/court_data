@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Query Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-5">
+    <div class="card shadow">
+        <div class="card-body">
+            <h2 class="mb-4 text-center text-primary">Query Dashboard</h2>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-primary mb-3">New Query</a>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>ID</th>
+                            <th>Case Type</th>
+                            <th>Case Number</th>
+                            <th>Case Year</th>
+                            <th>Status</th>
+                            <th>Parties</th>
+                            <th>Listing Date/Court No</th>
+                            <th>PDFs</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for q in queries %}
+                        <tr>
+                            <td>{{ q[0] }}</td>
+                            <td>{{ q[1] }}</td>
+                            <td>{{ q[2] }}</td>
+                            <td>{{ q[3] }}</td>
+                            <td>{{ q[4] }}</td>
+                            <td>{{ q[5] }}</td>
+                            <td>{{ q[6] }}</td>
+                            <td>
+                                <ul class="list-unstyled">
+                                {% for pdf in (q[7] or '[]')|fromjson %}
+                                    <li><a href="{{ pdf }}" target="_blank">Download PDF</a></li>
+                                {% endfor %}
+                                </ul>
+                            </td>
+                            <td><a href="{{ url_for('query_detail', query_id=q[0]) }}" class="btn btn-sm btn-info">View</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
