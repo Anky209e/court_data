@@ -13,9 +13,11 @@ CASE_YEAR = "2025"
 
 def fetch_case_data(case_type, case_number, case_year):
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Comment this line if you want to see the browser
+    chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--remote-debugging-port=9222")
+    chrome_options.binary_location = "/usr/bin/chromium"
     driver = webdriver.Chrome(options=chrome_options)
     wait = WebDriverWait(driver, 10)
 
@@ -53,14 +55,37 @@ def fetch_case_data(case_type, case_number, case_year):
             rows = tbody.find_all("tr")
             if rows:
                 cols = [td.get_text(strip=True) for td in rows[0].find_all("td")]
-                # Adjust indices as per actual table structure
-                result["serial_no"] = cols[0] if len(cols) > 0 else ""
                 result["case_type_status"] = cols[1] if len(cols) > 1 else ""
                 result["parties"] = cols[2] if len(cols) > 2 else ""
                 result["listing_date_court_no"] = cols[3] if len(cols) > 3 else ""
                 # Find latest order/judgment PDF link if present
-                pdf_link = rows[0].find("a", href=True)
-                result["latest_order_pdf"] = pdf_link["href"] if pdf_link else ""
+                pdf_link_tag = rows[0].find("a", href=True)
+                result["latest_order_page"] = pdf_link_tag["href"] if pdf_link_tag else ""
+                result["latest_order_pdfs"] = []
+
+                # --- STEP 7: FOLLOW ORDER LINK AND GET ALL PDF LINKS FROM TABLE ---
+                if pdf_link_tag:
+                    order_url = pdf_link_tag["href"]
+                    if not order_url.startswith("http"):
+                        order_url = "https://delhihighcourt.nic.in" + order_url
+                    driver.get(order_url)
+                    time.sleep(2)
+                    order_soup = BeautifulSoup(driver.page_source, "html.parser")
+                    pdf_links = []
+                    # Find the correct table (usually id="caseTable" on the order page too)
+                    order_table = order_soup.find("table", id="caseTable")
+                    if order_table:
+                        for row in order_table.find_all("tr"):
+                            # Usually the PDF is in the "Order Link" column, so look for <a> with .pdf in href
+                            for a in row.find_all("a", href=True):
+                                href = a["href"]
+                                if ".pdf" in href.lower():
+                                    if not href.startswith("http"):
+                                        href = "https://delhihighcourt.nic.in" + href
+                                    pdf_links.append(href)
+                    else:
+                        print("No order table found on order page!")
+                    result["latest_order_pdfs"] = pdf_links
             else:
                 raise Exception("No case data found for the given details.")
         else:
@@ -71,13 +96,23 @@ def fetch_case_data(case_type, case_number, case_year):
     finally:
         driver.quit()
 
-# --- STEP 7: PRINT STRUCTURED DATA ---
-results, raw_html = fetch_case_data(CASE_TYPE, CASE_NUMBER, CASE_YEAR)
+def get_case_types_and_years():
+    driver = webdriver.Chrome(options=Options().add_argument("--headless"))
+    driver.get("https://delhihighcourt.nic.in/app/get-case-type-status")
+    select_type = Select(driver.find_element(By.NAME, "case_type"))
+    types = [o.text for o in select_type.options if o.text.strip()]
+    select_year = Select(driver.find_element(By.NAME, "case_year"))
+    years = [o.text for o in select_year.options if o.text.strip()]
+    driver.quit()
+    return types, years
 
-if results:
-    print("\nStructured Case Data (for Flask app):\n")
-    print(results)
-else:
-    print("No case found or invalid CAPTCHA/inputs.")
+# --- STEP 7: PRINT STRUCTURED DATA ---
+if __name__ == "__main__":
+    results, raw_html = fetch_case_data(CASE_TYPE, CASE_NUMBER, CASE_YEAR)
+    if results:
+        print("\nStructured Case Data (for Flask app):\n")
+        print(results)
+    else:
+        print("No case found or invalid CAPTCHA/inputs.")
 
 # If you want to use this in Flask, just return or jsonify(results)
