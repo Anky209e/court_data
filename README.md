@@ -6,7 +6,9 @@ It uses Selenium to interact with the court's website and BeautifulSoup for HTML
 ---
 
 ## Features
+- **Court chosen: Delhi High Court**
 
+-  **CAPTCHA strategy: It's a static colored text parsed via BeautifulSoup**
 - **Search by Case Type, Number, and Year**  
 - **View all available order/judgment PDFs for a case**
 - **Dashboard of all your queries**
